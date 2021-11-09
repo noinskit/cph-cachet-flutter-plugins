@@ -86,7 +86,7 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
 
         if #available(iOS 11.0, *) {
             healthStore.requestAuthorization(toShare: nil, read: typesToRequest) { (success, error) in
-                result(success)
+                DispatchQueue.main.async { result(success) }
             }
         }
         else {
@@ -113,18 +113,20 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
 
             switch samplesOrNil {
             case let (samples as [HKQuantitySample]) as Any:
-                result(samples.map { sample -> NSDictionary in
-                    let unit = self.unitLookUp(key: dataTypeKey)
+                DispatchQueue.main.async {
+                    result(samples.map { sample -> NSDictionary in
+                        let unit = self.unitLookUp(key: dataTypeKey)
 
-                    return [
-                        "uuid": "\(sample.uuid)",
-                        "value": sample.quantity.doubleValue(for: unit),
-                        "date_from": Int(sample.startDate.timeIntervalSince1970 * 1000),
-                        "date_to": Int(sample.endDate.timeIntervalSince1970 * 1000),
-                        "source_id": sample.sourceRevision.source.bundleIdentifier,
-                        "source_name": sample.sourceRevision.source.name
-                    ]
-                })
+                        return [
+                            "uuid": "\(sample.uuid)",
+                            "value": sample.quantity.doubleValue(for: unit),
+                            "date_from": Int(sample.startDate.timeIntervalSince1970 * 1000),
+                            "date_to": Int(sample.endDate.timeIntervalSince1970 * 1000),
+                            "source_id": sample.sourceRevision.source.bundleIdentifier,
+                            "source_name": sample.sourceRevision.source.name
+                        ]
+                    })
+                }
                 return
             case var (samplesCategory as [HKCategorySample]) as Any:
                 if (dataTypeKey == self.SLEEP_IN_BED) {
@@ -136,35 +138,39 @@ public class SwiftHealthPlugin: NSObject, FlutterPlugin {
                 if (dataTypeKey == self.SLEEP_ASLEEP) {
                     samplesCategory = samplesCategory.filter { $0.value == 1 }
                 }
-                result(samplesCategory.map { sample -> NSDictionary in
-                    return [
-                        "uuid": "\(sample.uuid)",
-                        "value": sample.value,
-                        "date_from": Int(sample.startDate.timeIntervalSince1970 * 1000),
-                        "date_to": Int(sample.endDate.timeIntervalSince1970 * 1000),
-                        "source_id": sample.sourceRevision.source.bundleIdentifier,
-                        "source_name": sample.sourceRevision.source.name
-                    ]
-                })
+                DispatchQueue.main.async {
+                    result(samplesCategory.map { sample -> NSDictionary in
+                        return [
+                            "uuid": "\(sample.uuid)",
+                            "value": sample.value,
+                            "date_from": Int(sample.startDate.timeIntervalSince1970 * 1000),
+                            "date_to": Int(sample.endDate.timeIntervalSince1970 * 1000),
+                            "source_id": sample.sourceRevision.source.bundleIdentifier,
+                            "source_name": sample.sourceRevision.source.name
+                        ]
+                    })
+                }
                 return
             case let (samplesWorkout as [HKWorkout]) as Any:
-                result(samplesWorkout.map { sample -> NSDictionary in
-                    return [
-                        "uuid": "\(sample.uuid)",
-                        "value": Int(sample.duration),
-                        "date_from": Int(sample.startDate.timeIntervalSince1970 * 1000),
-                        "date_to": Int(sample.endDate.timeIntervalSince1970 * 1000),
-                        "source_id": sample.sourceRevision.source.bundleIdentifier,
-                        "source_name": sample.sourceRevision.source.name
-                    ]
-                })
+                DispatchQueue.main.async {
+                    result(samplesWorkout.map { sample -> NSDictionary in
+                        return [
+                            "uuid": "\(sample.uuid)",
+                            "value": Int(sample.duration),
+                            "date_from": Int(sample.startDate.timeIntervalSince1970 * 1000),
+                            "date_to": Int(sample.endDate.timeIntervalSince1970 * 1000),
+                            "source_id": sample.sourceRevision.source.bundleIdentifier,
+                            "source_name": sample.sourceRevision.source.name
+                        ]
+                    })
+                }
                 return
             default:
                 return
             }
         }
 
-        HKHealthStore().execute(query)
+        self.healthStore.execute(query)
     }
 
     func unitLookUp(key: String) -> HKUnit {

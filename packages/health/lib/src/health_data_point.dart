@@ -132,5 +132,15 @@ class HealthDataPoint {
 
   /// Override required due to overriding the '==' operator
   @override
-  int get hashCode => toJson().hashCode;
+  int get hashCode => Object.hash(
+      value,
+      unit,
+      dateFrom,
+      dateTo,
+      type,
+      platform,
+      deviceId,
+      sourceId,
+      sourceName,
+  );
 }

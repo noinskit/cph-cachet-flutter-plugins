@@ -166,19 +166,6 @@ class HealthFactory {
   /// Given an array of [HealthDataPoint]s, this method will return the array
   /// without any duplicates.
   static List<HealthDataPoint> removeDuplicates(List<HealthDataPoint> points) {
-    final unique = <HealthDataPoint>[];
-
-    for (var p in points) {
-      var seenBefore = false;
-      for (var s in unique) {
-        if (s == p) {
-          seenBefore = true;
-        }
-      }
-      if (!seenBefore) {
-        unique.add(p);
-      }
-    }
-    return unique;
+    return LinkedHashSet.of(points).toList();
   }
 }
